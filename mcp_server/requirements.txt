@@ -1,0 +1,12 @@
+# MCP Server dependencies
+# MCP SDK with CLI tools for development and testing
+mcp[cli]>=1.2.0
+
+# Shared dependencies with backend
+sqlalchemy>=2.0.25
+pydantic>=2.5.3
+pydantic-settings>=2.5.2
+
+# Testing dependencies
+pytest>=7.4.3
+pytest-mock>=3.12.0

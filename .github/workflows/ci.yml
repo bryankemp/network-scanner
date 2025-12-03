@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install nmap
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y nmap
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov black ruff
+    
+    - name: Run black (code formatting check)
+      run: |
+        cd backend
+        black --check app/
+      continue-on-error: true
+    
+    - name: Run ruff (linting)
+      run: |
+        cd backend
+        ruff check app/
+      continue-on-error: true
+    
+    - name: Run tests
+      run: |
+        cd backend
+        pytest tests/ -v
+      continue-on-error: true
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Build Docker image
+      run: |
+        docker build -f Dockerfile.production -t network-scanner:test .
+    
+    - name: Test Docker container
+      run: |
+        docker run -d --name test-container -p 8000:8000 network-scanner:test
+        sleep 10
+        curl -f http://localhost:8000/health || exit 1
+        docker stop test-container

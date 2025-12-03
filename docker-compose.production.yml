@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  network-scan:
+    container_name: network-scan
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    image: network-scan:latest
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=America/Chicago
+    volumes:
+      - ./data/scan_outputs:/app/scan_outputs
+      - ./data/database:/app/database
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

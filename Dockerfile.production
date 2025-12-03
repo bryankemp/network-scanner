@@ -1,0 +1,65 @@
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nmap \
+    graphviz \
+    curl \
+    ca-certificates \
+    gosu \
+    libcap2-bin \
+    && rm -rf /var/lib/apt/lists/*
+
+# Give nmap the necessary capabilities for OS detection and raw packet access
+# This allows nmap to run without root while still performing advanced scans
+RUN setcap cap_net_raw,cap_net_admin,cap_net_bind_service+eip /usr/bin/nmap
+
+# Create app user
+RUN useradd -m -s /bin/bash netscan
+
+# Set working directory
+WORKDIR /app
+
+# Copy backend requirements
+COPY backend/requirements.txt .
+
+# Copy MCP server requirements
+COPY mcp_server/requirements.txt /tmp/mcp_requirements.txt
+
+# Install Python dependencies (backend + MCP server)
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r /tmp/mcp_requirements.txt && \
+    rm /tmp/mcp_requirements.txt
+
+# Copy backend application
+COPY backend/ /app/
+
+# Copy MCP server
+COPY mcp_server/ /app/mcp_server/
+
+# Copy Flutter web build (static files)
+COPY frontend/build/web/ /app/static/
+
+# Create necessary directories
+RUN mkdir -p /app/scan_outputs /app/database && \
+    chown -R netscan:netscan /app
+
+# Note: We stay as root here to handle volume permissions at runtime
+# The entrypoint script will fix permissions and then drop to netscan user
+
+# Copy startup scripts
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY start-services.sh /app/start-services.sh
+RUN chmod +x /docker-entrypoint.sh /app/start-services.sh
+
+# Expose ports (8000=FastAPI, 8001=MCP)
+EXPOSE 8000 8001
+
+# Health check endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Use entrypoint to fix permissions before starting app
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["/app/start-services.sh"]

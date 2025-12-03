@@ -1,0 +1,126 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Output files
+*.html
+*.xlsx
+*.dot
+*.png
+*.svg
+*.xml
+scan_outputs/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+database/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Secrets and credentials
+*_keys.sh
+deploy_*.sh
+secrets/
+*.pem
+*.key
+*.cert
+
+# Docker volumes
+postgres_data/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Personal configuration
+# WARP.md is now kept in repository as project documentation
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+frontend/build/
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+
+# Ruff cache
+.ruff_cache/
+
+# Development documentation artifacts
+CONTRIBUTING.md
+DEPLOYMENT.md
+FRONTEND_SCHEDULE_SUMMARY.md
+GITHUB_READY_SUMMARY.md
+IMPLEMENTATION_STATUS.md
+MCP_QUICKSTART.md
+PRE_PUBLISH_CHECKLIST.md
+QUICK_REFERENCE.md
+README_OLD.md
+SCHEDULING.md
+TEST_IMPROVEMENTS.md
+TESTING.md
+WARP_MCP_SETUP.md
+mcp_server/CHANGES.md
+mcp_server/DEPLOYMENT.md
+mcp_server/MIGRATION.md
+mcp_server/TEST_IMPLEMENTATION.md
+mcp_server/TESTING.md
+mcp_server/WARP_SETUP.md

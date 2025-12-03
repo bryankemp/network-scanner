@@ -1,0 +1,20 @@
+version: "3.9"
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: network-scan-backend:latest
+    container_name: network-scan-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./backend:/app
+      - ./backend/scan_outputs:/app/scan_outputs
+      - ./frontend/build/web:/app/static:ro
+    # Grant raw sockets for nmap when possible
+    cap_add:
+      - NET_RAW
+    command: ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
