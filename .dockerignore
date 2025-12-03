@@ -1,0 +1,9 @@
+.git
+backend/venv
+venv
+__pycache__
+.pytest_cache
+*.pyc
+scan_outputs
+data
+.env

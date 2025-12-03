@@ -5,35 +5,92 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 ## Project Overview
 Network Scanner is a FastAPI-based web service that performs comprehensive network scanning using nmap. It discovers hosts, detects services/OS/VMs, generates multiple report formats (HTML, Excel, PNG diagrams), and provides AI integration via MCP (Model Context Protocol).
 
+## Project Structure
+Multi-component architecture:
+- **`backend/`** - FastAPI REST API and core scanning logic
+- **`frontend/`** - Flutter web application (Material Design 3)
+- **`mcp_server/`** - AI integration via Model Context Protocol
+- **`tests/`** - Backend integration tests
+- **`setup.py`** - Automated environment setup and service installation
+- **`run_tests.py`** - Comprehensive test runner with reporting
+
 ## Development Commands
 
-### Server Management
+### Quick Setup (Automated)
+```bash
+# Set up complete development environment (auto-installs missing tools)
+python3 setup.py dev
+
+# Install missing tools only (nmap, Flutter, Docker via snap/apt)
+python3 setup.py install-tools
+
+# Run comprehensive test suite (all components + linting + health checks)
+python3 run_tests.py
+
+# Install as system service (macOS launchd or Linux systemd)
+python3 setup.py service
+
+# Build and run Docker containers
+python3 setup.py docker
+
+# Clean development artifacts
+python3 setup.py clean
+```
+
+**Note:** On Ubuntu/Linux, `setup.py dev` will automatically install:
+- **nmap** via apt (with capabilities for non-root scanning)
+- **Flutter** via snap (if missing)
+- **Docker** via snap (if missing)
+
+### Backend Development
 ```bash
 # Start development server (with auto-reload)
 cd backend
-python -m uvicorn app.main:app --reload
+source venv/bin/activate
+uvicorn app.main:app --reload
 
 # Start production server
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 # API documentation
-open http://localhost:8000/docs
+open http://localhost:8000/docs  # or http://localhost:8000/docs
+```
+
+### Frontend Development
+```bash
+cd frontend
+
+# Install dependencies
+flutter pub get
+
+# Run development server
+flutter run -d chrome
+
+# Build for web
+flutter build web
+
+# Run frontend tests
+flutter test
 ```
 
 ### Testing
 ```bash
-# Quick test with default small network (/29 - 6 usable IPs)
-./test_parallel_scan.py
+# Comprehensive test suite (92 tests: backend, MCP, frontend, linting, health)
+python3 run_tests.py
 
-# Test specific network
-./test_parallel_scan.py 192.168.1.0/24
-
-# Test multiple networks
-./test_parallel_scan.py 192.168.1.0/24 10.0.0.0/24
-
-# Run unit tests (when available)
+# Backend unit tests only
 cd backend
-pytest
+pytest tests/ -v
+
+# Single test file
+pytest tests/test_api.py -v
+
+# MCP server tests
+pytest mcp_server/test_mcp_server.py -v
+
+# Frontend tests
+cd frontend
+flutter test
 ```
 
 ### Linting and Code Quality
@@ -65,7 +122,7 @@ The FastAPI application follows a clean architecture pattern:
   - Scans: POST/GET/DELETE operations
   - Schedules: CRUD operations for recurring scans
   - Artifacts: File serving (HTML, Excel, PNG, XML)
-  - Stats: Network statistics
+  - Stats: Network statistics and host queries
   - Health check endpoint
   
 - **`models/`**: SQLAlchemy ORM models
@@ -75,6 +132,7 @@ The FastAPI application follows a clean architecture pattern:
   - `Port`: Services/ports per host
   - `Artifact`: Generated files (HTML, Excel, diagrams)
   - `TracerouteHop`: Network topology data
+  - `User`, `Settings`: Authentication and configuration
   
 - **`schemas/`**: Pydantic models for request/response validation
   
@@ -84,15 +142,37 @@ The FastAPI application follows a clean architecture pattern:
   - `parser.py`: Parses nmap XML output into structured data
   - `report_gen.py`: Generates HTML, Excel, and Graphviz diagrams
   - `network_detection.py`: Auto-detects current network CIDR
+  - `stuck_scan_monitor.py`: Monitors and handles hung scans
   
 - **`scheduler/`**: Scheduled scan management
   - `scheduler.py`: APScheduler-based background service for cron-based recurring scans
   - Automatically starts on app startup, gracefully shuts down
   - Manages schedule lifecycle (add/update/remove/trigger)
   
+- **`auth/`**: Authentication system
+  - `security.py`: JWT token generation and validation
+  - `dependencies.py`: FastAPI dependency injection for auth
+  
+- **`api/`**: API route organization (if using router pattern)
 - **`config.py`**: Application settings (scan parallelism, paths, database URL)
 - **`database.py`**: SQLAlchemy session management
-- **`auth.py`**: JWT authentication (currently simplified for development)
+
+### Frontend Structure (`frontend/`)
+Flutter web application with Material Design 3:
+- State management and API client for backend communication
+- Responsive design for desktop, tablet, mobile
+- Dark/light theme support
+- Real-time scan progress updates
+
+### Test Structure (`tests/`)
+Comprehensive integration tests:
+- `test_api.py`: API endpoint tests
+- `test_authentication.py`: Auth flow and JWT tests
+- `test_models.py`: Database model tests
+- `test_scan_orchestration.py`: End-to-end scan workflow tests
+- `test_scheduler.py`: Scheduled scan tests
+- `test_mcp_and_monitoring.py`: MCP server and monitoring tests
+- `conftest.py`: Shared pytest fixtures
 
 ### Scanning Workflow
 1. **Discovery Phase (0-15%)**: Fast ping scan across all networks to find live hosts
@@ -202,9 +282,11 @@ Edit `backend/app/scanner/parser.py` → `detect_enhanced_vm()`:
 ## Important Notes
 
 ### nmap Requirements
+- Ubuntu/Debian: `sudo apt-get install nmap`
 - macOS: `brew install nmap`
 - Some features require elevated privileges (OS detection with `-O`)
 - Traceroute typically needs root/sudo
+- Linux: Grant nmap capabilities for non-root scanning: `sudo setcap cap_net_raw,cap_net_admin+eip $(which nmap)`
 
 ### Performance Tuning
 - Adjust `scan_parallelism` in config.py (default: 8)

@@ -32,18 +32,18 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /tmp/mcp_requirements.txt && \
     rm /tmp/mcp_requirements.txt
 
-# Copy backend application
-COPY backend/ /app/
+# Copy backend application with correct ownership
+COPY --chown=netscan:netscan backend/ /app/
 
-# Copy MCP server
-COPY mcp_server/ /app/mcp_server/
+# Copy MCP server with correct ownership
+COPY --chown=netscan:netscan mcp_server/ /app/mcp_server/
 
-# Copy Flutter web build (static files)
-COPY frontend/build/web/ /app/static/
+# Copy Flutter web build (static files) with correct ownership
+COPY --chown=netscan:netscan frontend/build/web/ /app/static/
 
-# Create necessary directories
+# Create necessary directories and set ownership (only for these dirs, not recursive)
 RUN mkdir -p /app/scan_outputs /app/database && \
-    chown -R netscan:netscan /app
+    chown netscan:netscan /app/scan_outputs /app/database
 
 # Note: We stay as root here to handle volume permissions at runtime
 # The entrypoint script will fix permissions and then drop to netscan user
