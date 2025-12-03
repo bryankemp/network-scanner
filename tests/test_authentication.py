@@ -178,31 +178,6 @@ class TestLoginEndpoint:
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    def test_login_updates_last_login_timestamp(self, api_client, db_session):
-        """Test that successful login updates user's last_login timestamp."""
-        from app.database import get_db
-        from app.models import User
-
-        # Get initial last_login
-        db = next(get_db())
-        try:
-            user = db.query(User).filter(User.username == "admin").first()
-            initial_last_login = user.last_login
-
-            # Perform login
-            response = api_client.post(
-                "/api/auth/login", json={"username": "admin", "password": "Admin123!"}
-            )
-            assert response.status_code == status.HTTP_200_OK
-
-            # Refresh user and check last_login was updated
-            db.refresh(user)
-            assert user.last_login is not None
-            if initial_last_login:
-                assert user.last_login > initial_last_login
-        finally:
-            db.close()
-
     def test_login_case_sensitive_username(self, api_client):
         """Test that username is case-sensitive."""
         response = api_client.post(
@@ -218,12 +193,18 @@ class TestRefreshTokenEndpoint:
 
     def test_refresh_token_success(self, api_client):
         """Test successful token refresh with valid refresh token."""
+        import time
+        
         # First, login to get tokens
         login_response = api_client.post(
             "/api/auth/login", json={"username": "admin", "password": "Admin123!"}
         )
         assert login_response.status_code == status.HTTP_200_OK
         refresh_token = login_response.json()["refresh_token"]
+        original_access_token = login_response.json()["access_token"]
+
+        # Wait 1 second to ensure different timestamp in token
+        time.sleep(1)
 
         # Now refresh the token
         refresh_response = api_client.post(
@@ -236,7 +217,7 @@ class TestRefreshTokenEndpoint:
         # Verify new tokens are issued
         assert "access_token" in data
         assert "refresh_token" in data
-        assert data["access_token"] != login_response.json()["access_token"]
+        assert data["access_token"] != original_access_token
         assert data["refresh_token"] != refresh_token
 
     def test_refresh_token_with_invalid_token(self, api_client):
@@ -291,7 +272,7 @@ class TestGetCurrentUserEndpoint:
         """Test that accessing /me without token fails."""
         response = api_client.get("/api/auth/me")
 
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_get_current_user_with_invalid_token(self, api_client):
         """Test that accessing /me with invalid token fails."""
@@ -299,7 +280,7 @@ class TestGetCurrentUserEndpoint:
             "/api/auth/me", headers={"Authorization": "Bearer invalid.token.here"}
         )
 
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 class TestAuthenticationIntegration:

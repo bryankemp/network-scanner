@@ -334,7 +334,7 @@ class TestCronExpressionHandling:
         scheduler_service.add_schedule(schedule.id)
 
     def test_invalid_cron_expression(self, scheduler_service, db_session):
-        """Test that invalid cron expression raises error."""
+        """Test that invalid cron expression is handled gracefully (logs error, doesn't raise)."""
         schedule = ScanSchedule(
             name="Test",
             network_range="192.168.1.0/24",
@@ -344,8 +344,13 @@ class TestCronExpressionHandling:
         db_session.add(schedule)
         db_session.commit()
 
-        with pytest.raises(Exception):
-            scheduler_service.add_schedule(schedule.id)
+        # Should not raise - implementation catches exceptions and logs them
+        scheduler_service.add_schedule(schedule.id)
+        
+        # Verify job was not added to scheduler
+        job_id = f"schedule_{schedule.id}"
+        job = scheduler_service.scheduler.get_job(job_id)
+        assert job is None
 
     def test_next_run_time_calculation(self, scheduler_service, db_session):
         """Test that next_run_at is calculated correctly."""

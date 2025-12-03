@@ -16,7 +16,11 @@ from sqlalchemy.pool import StaticPool
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'backend'))
 
 from app.database import Base
-from app.models import Scan, Host, Port, Artifact, ScanStatus, HostScanStatus, ArtifactType
+# Import all models to ensure tables are created
+from app.models import (
+    Scan, Host, Port, Artifact, ScanStatus, HostScanStatus, ArtifactType,
+    User, UserRole, ScanSchedule, TracerouteHop, Settings
+)
 
 
 @pytest.fixture(scope="function")
@@ -27,13 +31,26 @@ def db_engine():
     Yields:
         Engine: SQLAlchemy engine connected to in-memory database
     """
+    from unittest.mock import patch
+    
+    # Use file-based SQLite with shared cache for better thread safety
     engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
+        "sqlite:///file:test_db?mode=memory&cache=shared&uri=true",
+        connect_args={"check_same_thread": False, "uri": True},
         poolclass=StaticPool,
+        echo=False,
     )
     Base.metadata.create_all(bind=engine)
-    yield engine
+    
+    # Create a session factory that uses the test engine
+    TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    
+    # Patch SessionLocal globally so that scheduler and orchestrator use test database
+    with patch('app.database.SessionLocal', TestSessionLocal), \
+         patch('app.scheduler.scheduler.SessionLocal', TestSessionLocal), \
+         patch('app.scanner.orchestrator.SessionLocal', TestSessionLocal):
+        yield engine
+    
     Base.metadata.drop_all(bind=engine)
 
 
@@ -202,10 +219,10 @@ def api_client():
     from app.main import app
     from app.database import get_db
     
-    # Override database dependency with test database
+    # Override database dependency with test database  
     engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
+        "sqlite:///file:test_api_db?mode=memory&cache=shared&uri=true",
+        connect_args={"check_same_thread": False, "uri": True},
         poolclass=StaticPool,
     )
     Base.metadata.create_all(bind=engine)

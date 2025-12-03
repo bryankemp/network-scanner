@@ -25,7 +25,7 @@ class ScanSchedule(Base):
     next_run_at = Column(DateTime, nullable=True)
 
     # Foreign keys
-    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     # Relationships
     created_by_user = relationship("User", back_populates="scan_schedules")
