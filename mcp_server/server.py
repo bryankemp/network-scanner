@@ -30,15 +30,27 @@ db_url = os.environ.get("DATABASE_URL", settings.database_url)
 
 # Ensure absolute path for sqlite URLs
 if db_url.startswith("sqlite:///") and not db_url.startswith("sqlite:////"):
-    try:
-        from pathlib import Path
-        if db_url.startswith("sqlite:///./"):
-            # Get the actual project root directory
-            project_root = Path(__file__).parent.parent
-            db_path = project_root / db_url.split("sqlite:///./", 1)[1]
-            db_url = f"sqlite:///{db_path.as_posix()}"
-    except Exception:
-        pass
+    from pathlib import Path
+    # Get the actual project root directory (parent of mcp_server dir)
+    project_root = Path(__file__).parent.parent.resolve()
+    
+    if db_url.startswith("sqlite:///./"):
+        # Relative path like sqlite:///./database/network_scanner.db
+        relative_path = db_url.split("sqlite:///./", 1)[1]
+        db_path = project_root / relative_path
+    elif not db_url.startswith("sqlite:///"):
+        # Just sqlite://path (not absolute)
+        relative_path = db_url.split("sqlite://", 1)[1]
+        db_path = project_root / relative_path
+    else:
+        # Already has triple slash, but might not be absolute
+        relative_path = db_url.split("sqlite:///", 1)[1]
+        if not relative_path.startswith("/"):
+            db_path = project_root / relative_path
+        else:
+            db_path = Path(relative_path)
+    
+    db_url = f"sqlite:///{db_path.as_posix()}"
 
 engine = create_engine(
     db_url,

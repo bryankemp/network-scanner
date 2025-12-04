@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     debug: bool = False
 
     # Database
-    database_url: str = "sqlite:///./database/network_scanner.db"
+    database_url: str = "sqlite:///./data/database/network_scanner.db"
 
     # Security
     secret_key: str = "change-this-to-a-random-secret-key-in-production"
