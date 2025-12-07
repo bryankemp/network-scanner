@@ -28,12 +28,15 @@ docker run -d \
   --cap-add NET_RAW \
   --cap-add NET_ADMIN \
   -p 8000:8000 \
+  -p 8001:8001 \
   -v $(pwd)/data/scan_outputs:/app/scan_outputs \
   -v $(pwd)/data/database:/app/database \
   ghcr.io/bryank/network-scan:latest
 ```
 
-Access the application at `http://localhost:8000`
+Access the application at:
+- **Web UI/API**: `http://localhost:8000`
+- **MCP Server**: `http://localhost:8001`
 
 ### Using docker-compose
 
@@ -83,6 +86,7 @@ docker run -d \
   --cap-add NET_RAW \
   --cap-add NET_ADMIN \
   -p 8000:8000 \
+  -p 8001:8001 \
   ghcr.io/bryank/network-scan:latest
 ```
 
@@ -94,6 +98,7 @@ docker run -d \
   --cap-add NET_RAW \
   --cap-add NET_ADMIN \
   -p 8000:8000 \
+  -p 8001:8001 \
   -v network-scan-db:/app/database \
   -v network-scan-outputs:/app/scan_outputs \
   ghcr.io/bryank/network-scan:latest
@@ -107,6 +112,7 @@ docker run -d \
   --cap-add NET_RAW \
   --cap-add NET_ADMIN \
   -p 8000:8000 \
+  -p 8001:8001 \
   -e TZ=America/New_York \
   ghcr.io/bryank/network-scan:latest
 ```

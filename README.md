@@ -254,6 +254,7 @@ docker run -d \
   --cap-add NET_RAW \
   --cap-add NET_ADMIN \
   -p 8000:8000 \
+  -p 8001:8001 \
   -v $(pwd)/data/scan_outputs:/app/scan_outputs \
   -v $(pwd)/data/database:/app/database \
   ghcr.io/bryank/network-scan:latest
