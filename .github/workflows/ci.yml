@@ -47,7 +47,6 @@ jobs:
     
     - name: Run tests
       run: |
-        cd backend
         pytest tests/ -v
       continue-on-error: true
 
