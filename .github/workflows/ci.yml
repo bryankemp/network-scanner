@@ -73,6 +73,16 @@ jobs:
     - name: Test Docker container
       run: |
         docker run -d --name test-container -p 8000:8000 network-scanner:test
-        sleep 10
+        echo "Waiting for container to be ready..."
+        for i in {1..30}; do
+          if curl -s http://localhost:8000/health > /dev/null 2>&1; then
+            echo "Container is healthy!"
+            break
+          fi
+          echo "Attempt $i/30: Container not ready yet..."
+          sleep 2
+        done
+        echo "Container logs:"
+        docker logs test-container
         curl -f http://localhost:8000/health || exit 1
         docker stop test-container
