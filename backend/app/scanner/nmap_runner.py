@@ -207,7 +207,7 @@ class NmapRunner:
                         if port_state is not None and port_state.get("state") == "open":
                             has_open_port = True
                             break
-                
+
                 # Only add hosts with open ports (actual services)
                 if has_open_port:
                     addr = host.find('address[@addrtype="ipv4"]')

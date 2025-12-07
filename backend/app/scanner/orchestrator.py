@@ -156,6 +156,7 @@ class ScanOrchestrator:
 
             # Remove any pre-created Host rows that didn't pass the filter
             from ..models import Host as HostModel
+
             filtered_ips = {h.get("ip") for h in filtered_hosts if h.get("ip")}
             if filtered_ips:
                 stale_hosts = (
