@@ -3,7 +3,7 @@
 A comprehensive network scanning and management solution with a modern web interface, RESTful API, and AI integration via Model Context Protocol (MCP).
 
 **Author:** Bryan Kemp <bryan@kempville.com>  
-**License:** MIT  
+**License:** BSD 3-Clause  
 **Version:** 1.0.0
 
 ## 📋 Table of Contents
@@ -18,6 +18,7 @@ A comprehensive network scanning and management solution with a modern web inter
 - [Development](#development)
 - [Testing](#testing)
 - [Deployment](#deployment)
+- [Container Registry](#container-registry)
 - [Troubleshooting](#troubleshooting)
 
 ## ✨ Features
@@ -239,12 +240,85 @@ cd frontend && flutter test
 
 ## 🚀 Deployment
 
-### Docker
+### Using Pre-built Container from GitHub Container Registry
+
+The easiest way to run Network Scanner is using the pre-built container image:
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/bryank/network-scan:latest
+
+# Run the container
+docker run -d \
+  --name network-scan \
+  --cap-add NET_RAW \
+  --cap-add NET_ADMIN \
+  -p 8000:8000 \
+  -v $(pwd)/data/scan_outputs:/app/scan_outputs \
+  -v $(pwd)/data/database:/app/database \
+  ghcr.io/bryank/network-scan:latest
+```
+
+**Using docker-compose with GHCR:**
+
+Create `docker-compose.ghcr.yml`:
+
+```yaml
+services:
+  network-scan:
+    container_name: network-scan
+    image: ghcr.io/bryank/network-scan:latest
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=America/Chicago
+    volumes:
+      - ./data/scan_outputs:/app/scan_outputs
+      - ./data/database:/app/database
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+```
+
+Then run:
+
+```bash
+docker-compose -f docker-compose.ghcr.yml up -d
+```
+
+**Available Tags:**
+- `latest` - Most recent stable release
+- `v1.0.0` - Specific version
+- `main` - Latest from main branch
+
+### Building from Source
 
 ```bash
 python3 setup.py docker
 docker-compose -f docker-compose.production.yml up -d
 ```
+
+## 📦 Container Registry
+
+For detailed information about using GitHub Container Registry, building multi-architecture images, and publishing workflows, see:
+
+👉 **[CONTAINER_REGISTRY.md](CONTAINER_REGISTRY.md)** - Complete container registry guide
+
+Key topics covered:
+- Pulling and running pre-built images
+- Authentication for private registries
+- Multi-architecture support (amd64, arm64)
+- GitHub Actions automation
+- Tag strategies and best practices
 
 ### System Service
 
@@ -283,13 +357,31 @@ sudo apt-get install nmap
 sudo setcap cap_net_raw,cap_net_admin+eip $(which nmap)
 ```
 
+**Container Permission Issues**
+
+If the container can't scan, ensure the container has the required capabilities:
+```bash
+docker run --cap-add NET_RAW --cap-add NET_ADMIN ...
+```
+
+**Container Image Authentication**
+
+For private registries or rate limiting:
+```bash
+# GitHub Container Registry
+echo $GITHUB_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
+
+# Then pull
+docker pull ghcr.io/bryank/network-scan:latest
+```
+
 **Database locked**
 
 For high concurrency, use PostgreSQL instead of SQLite.
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) file
+BSD 3-Clause License - see [LICENSE](LICENSE) file
 
 ## 📞 Support
 
