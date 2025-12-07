@@ -56,6 +56,18 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.5'
+        channel: 'stable'
+    
+    - name: Build Flutter web
+      run: |
+        cd frontend
+        flutter pub get
+        flutter build web --release
+    
     - name: Build Docker image
       run: |
         docker build -f Dockerfile.production -t network-scanner:test .
