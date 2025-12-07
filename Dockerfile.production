@@ -41,9 +41,9 @@ COPY --chown=netscan:netscan mcp_server/ /app/mcp_server/
 # Copy Flutter web build (static files) with correct ownership
 COPY --chown=netscan:netscan frontend/build/web/ /app/static/
 
-# Create necessary directories and set ownership (only for these dirs, not recursive)
-RUN mkdir -p /app/scan_outputs /app/database && \
-    chown netscan:netscan /app/scan_outputs /app/database
+# Create necessary directories and set ownership
+RUN mkdir -p /app/scan_outputs /app/data/database && \
+    chmod -R 755 /app/scan_outputs /app/data
 
 # Note: We stay as root here to handle volume permissions at runtime
 # The entrypoint script will fix permissions and then drop to netscan user
